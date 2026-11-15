@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Architect Foundation — Practice Exam</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1f232c;
+    --border: #2a2f3a;
+    --text: #e8eaed;
+    --muted: #9aa3b2;
+    --accent: #d97757;
+    --accent-2: #4f8ff0;
+    --correct: #3fb950;
+    --incorrect: #f85149;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 28px 20px 80px;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  h1 {
+    font-size: 1.35rem;
+    margin: 0;
+    font-weight: 650;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .progress-shell {
+    background: var(--panel-2);
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+    margin: 14px 0 22px;
+    border: 1px solid var(--border);
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-2), var(--accent));
+    width: 0%;
+    transition: width 0.25s ease;
+  }
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .q-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(217,119,87,0.12);
+    border: 1px solid rgba(217,119,87,0.3);
+    padding: 3px 9px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .q-text {
+    font-size: 1.12rem;
+    line-height: 1.5;
+    margin: 0 0 20px;
+    font-weight: 560;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel-2);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .option:hover:not(.locked) {
+    border-color: var(--accent-2);
+  }
+  .option input {
+    margin-top: 3px;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+  }
+  .option .letter {
+    font-weight: 700;
+    color: var(--muted);
+    flex-shrink: 0;
+    width: 18px;
+  }
+  .option .label { flex: 1; line-height: 1.4; }
+  .option.correct {
+    border-color: var(--correct);
+    background: rgba(63,185,80,0.12);
+  }
+  .option.incorrect {
+    border-color: var(--incorrect);
+    background: rgba(248,81,73,0.12);
+  }
+  .option.locked { cursor: default; }
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  button {
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent-2); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #1a1208;
+  }
+  .btn-primary:hover:not(:disabled) { opacity: 0.9; border-color: var(--accent); }
+  .explain {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+  .explain.show { display: block; }
+  .explain .verdict {
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .verdict.ok { color: var(--correct); }
+  .verdict.bad { color: var(--incorrect); }
+  .nav-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 22px;
+    flex-wrap: wrap;
+  }
+  .jump {
+    width: 34px;
+    height: 34px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--muted);
+    font-size: 0.72rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .jump.answered { color: var(--text); border-color: var(--accent-2); }
+  .jump.current { outline: 2px solid var(--accent); }
+  .jump.correct-jump { background: rgba(63,185,80,0.18); }
+  .jump.incorrect-jump { background: rgba(248,81,73,0.18); }
+  #grid-wrap { margin-top: 28px; }
+  #grid-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+    gap: 6px;
+  }
+  .final-screen { text-align: center; padding: 10px 0; }
+  .score-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    margin: 10px auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    border: 6px solid var(--accent);
+    background: var(--panel-2);
+  }
+  .score-circle .pct { font-size: 1.8rem; font-weight: 700; }
+  .score-circle .frac { font-size: 0.8rem; color: var(--muted); }
+  .final-note { color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Claude Architect Foundation — Practice Exam</h1>
+      <div class="sub">100 questions · 4 options each · instant explanations</div>
+    </div>
+    <div class="sub" id="score-live">Score: 0 / 0</div>
+  </header>
+
+  <div class="meta-row">
+    <span id="q-counter">Question 1 of 100</span>
+    <span id="q-category"></span>
+  </div>
+  <div class="progress-shell"><div class="progress-bar" id="progress-bar"></div></div>
+
+  <div class="card" id="quiz-card">
+    <span class="q-tag" id="q-tag">Question</span>
+    <p class="q-text" id="q-text"></p>
+    <div class="options" id="options"></div>
+    <div class="explain" id="explain">
+      <span class="verdict" id="verdict"></span>
+      <span id="explain-text"></span>
+    </div>
+    <div class="controls">
+      <button id="prev-btn">← Previous</button>
+      <button id="check-btn" class="btn-primary">Check Answer</button>
+      <button id="next-btn" class="btn-primary hidden">Next →</button>
+    </div>
+  </div>
+
+  <div class="card final-screen hidden" id="final-card">
+    <h2>Exam Complete</h2>
+    <div class="score-circle">
+      <span class="pct" id="final-pct">0%</span>
+      <span class="frac" id="final-frac">0 / 100</span>
+    </div>
+    <p class="final-note">Review any question below by jumping back, or restart to try again.</p>
+    <button class="btn-primary" id="restart-btn">Restart Exam</button>
+  </div>
+
+  <div id="grid-wrap">
+    <div id="grid-label">Jump to question (green = correct, red = incorrect, outline = unanswered):</div>
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+["Model Family","What organization developed the Claude family of large language models?","OpenAI","Anthropic","Google DeepMind","Meta AI",1,"Claude is developed by Anthropic, an AI safety and research company."],
+["Model Family","Which of these is NOT one of Claude's current model size/tier names?","Haiku","Sonnet","Opus","Gemini",3,"Gemini is Google's model family; Haiku, Sonnet, and Opus are Claude's tiers."],
+["Model Family","Which Claude tier is positioned as the fastest and most cost-efficient?","Opus","Sonnet","Haiku","Ultra",2,"Haiku is optimized for speed and low cost, suited to high-volume, lightweight tasks."],
+["Model Family","Which Claude tier is generally the most capable / highest-intelligence option?","Haiku","Sonnet","Opus","Nano",2,"Opus represents Anthropic's most capable tier, intended for the most complex tasks."],
+["Model Family","Which Claude tier is typically described as balancing intelligence and speed for everyday enterprise workloads?","Haiku","Sonnet","Opus","Turbo",1,"Sonnet sits between Haiku and Opus, balancing capability with speed and cost for general-purpose use."],
+["Context & Tokens","In LLM processing, a 'token' most closely corresponds to:","A whole sentence","A sub-word text chunk used internally by the model","A single API call","A database row",1,"Tokens are sub-word units (often parts of words) that models use to process text; token count differs from character or word count."],
+["Context & Tokens","What generally happens when a conversation's content exceeds the model's context window?","It is automatically and losslessly compressed","Older content must be truncated or summarized, since not everything can be processed at once","Nothing — there is no practical limit","Billing is halted",1,"Context windows are finite; content beyond the limit must be trimmed, summarized, or otherwise managed."],
+["Context & Tokens","A larger context window is most directly useful for:","Guaranteeing lower latency","Processing long documents or long conversation histories in a single request","Automatically discounting pricing","Improving image generation quality",1,"Larger context windows let more input (e.g., long documents, long chat history) fit into a single request."],
+["Context & Tokens","Which statement about tokens is accurate?","One token always equals exactly one character","Token count varies by language and content, and is estimated using a tokenizer","Tokens apply only to the model's output, never its input","Token limits apply only to the Haiku tier",1,"Tokenization varies by content and language; both input and output consume tokens, and all tiers have context/token limits."],
+["Context & Tokens","Claude API usage is generally metered (billed) primarily by:","Number of API calls only","Input and output tokens","Wall-clock session duration only","Number of registered users",1,"Anthropic's API pricing is primarily based on the number of input and output tokens processed."],
+["Messages API","The primary interface for interacting with Claude via the Anthropic API is called the:","Completions API","Messages API","Chat API","Prompts API",1,"The Messages API is the standard interface for sending conversational turns to Claude."],
+["Messages API","In the Messages API's `messages` array, which roles are typically used for conversational turns?","system and assistant only","user and assistant","admin and guest","human and bot",1,"Conversational turns alternate between the 'user' and 'assistant' roles within the messages array."],
+["Messages API","Where is a top-level system prompt typically specified when calling the Messages API?","Inside the first user message","As a separate top-level `system` parameter","It cannot be set via the API","In the model name field",1,"The Messages API exposes a dedicated `system` parameter for persistent instructions, separate from the message turns."],
+["Messages API","What does the `max_tokens` parameter control in a Messages API request?","The maximum length of the input prompt","The maximum number of tokens the model may generate in its response","The total number of API calls allowed","The size of the context window",1,"`max_tokens` caps how many tokens the model is allowed to generate in that response."],
+["Messages API","Which parameter most directly controls the randomness/creativity of Claude's output?","max_tokens","temperature","stop_sequence","model version only",1,"Temperature controls sampling randomness — lower values produce more deterministic, focused output."],
+["System Prompts","The primary purpose of a system prompt is to:","Authenticate the user's API key","Set persistent context, role, and behavioral instructions for the whole conversation","Store the full conversation history","Define the output token limit",1,"System prompts establish persistent instructions, persona, and constraints that apply throughout the conversation."],
+["System Prompts","Which is a best practice for writing an effective system prompt?","Keep it vague so the model infers everything itself","Be specific about role, tone, constraints, and desired output format","Never include examples of desired behavior","Deliberately exceed the context window",1,"Specific, well-structured system prompts (role, tone, constraints, format) produce more reliable, consistent behavior."],
+["System Prompts","Few-shot prompting refers to:","Setting a very small max_tokens value","Including a handful of example input/output pairs in the prompt to guide behavior","Limiting the number of API calls made","Training an entirely new model from scratch",1,"Few-shot prompting demonstrates the desired behavior via a small number of examples embedded in the prompt."],
+["System Prompts","Chain-of-thought prompting encourages the model to:","Answer in a single word whenever possible","Show intermediate reasoning steps before giving a final answer","Skip all reasoning in favor of speed","Respond using only emojis",1,"Chain-of-thought prompting asks the model to reason step-by-step, often improving accuracy on complex tasks."],
+["System Prompts","Role prompting (e.g., 'You are an expert payments analyst') primarily helps by:","Changing the model's per-token pricing","Framing context and persona to influence tone, focus, and depth of responses","Increasing the size of the context window","Bypassing the model's safety guidelines",1,"Assigning a role/persona shapes how the model frames and prioritizes its response, without altering pricing or safety behavior."],
+["Prompt Engineering","XML-style tags (e.g., <instructions>, <context>) are commonly recommended in Claude prompts because they:","Are a mandatory API requirement","Help clearly delineate distinct sections of a prompt for the model to parse","Reduce the number of tokens consumed","Enable image generation",1,"Structuring prompts with tags helps the model reliably distinguish instructions, context, and examples."],
+["Prompt Engineering","Which technique most directly helps reduce hallucination when asking Claude to answer from a provided document?","Instructing it to guess confidently if unsure","Instructing it to quote/cite the source directly and say when an answer isn't found in it","Removing all instructions from the prompt","Maximizing the temperature setting",1,"Grounding instructions — quote directly, admit absence of an answer — reduce the chance of fabricated claims."],
+["Prompt Engineering","'Prefilling' the assistant's response in Claude refers to:","Pre-loading additional training data into the model","Supplying the beginning of the assistant's reply to steer the format or content of the completion","Caching every previous conversation turn permanently","Setting a default max_tokens value",1,"Prefill lets a developer start the assistant turn (e.g., with '{' to force JSON), steering the continuation."],
+["Prompt Engineering","When asking for structured output like JSON, a recommended practice is to:","Avoid giving any schema and let the model decide freely","Provide a clear schema or example and instruct strict adherence to it","Use only free-form natural language with no structure","Disable the system prompt entirely",1,"Providing an explicit schema/example and instructing strict compliance improves output reliability."],
+["Prompt Engineering","A clear, well-scoped prompt generally improves output quality primarily because it:","Reduces the model's token price","Narrows ambiguity about what is being asked, reducing the chance of misinterpretation","Forces the model to use more tools","Increases the context window automatically",1,"Clarity reduces ambiguity, which is the main lever prompt engineering has over the model's interpretation of intent."],
+["Tool Use","Claude's 'tool use' (function calling) feature allows the model to:","Directly execute code on Anthropic's servers unsupervised","Request that the calling application invoke a specified function/tool with structured arguments","Browse the internet without any restriction","Modify its own model weights",1,"Tool use lets Claude emit a structured request for a tool call; the actual execution happens in the client application."],
+["Tool Use","In a tool-use workflow, who actually executes the tool or function?","Claude itself, fully autonomously, with no application involvement","The calling application/client code, which then returns the result to Claude","Anthropic's infrastructure, automatically and invisibly","An unrelated third-party vendor",1,"The application is responsible for executing the tool and returning results back to Claude in a follow-up message."],
+["Tool Use","Each tool definition passed to Claude typically includes:","Only a tool name, nothing else","A name, a description, and an input schema (e.g., JSON Schema)","A pre-written canned response","A billing code",1,"Tool definitions specify name, description, and an input schema so Claude knows how and when to call it."],
+["Tool Use","When Claude decides to use a tool, the API response contains:","Only plain, unstructured text","A `tool_use` content block specifying the tool name and structured input","An API error by default","A downloaded binary file",1,"Claude signals tool use via a structured `tool_use` block containing the tool name and arguments."],
+["Tool Use","Forcing Claude to use a specific tool in a given turn can be done via:","Raising the temperature parameter","The `tool_choice` parameter","Removing the system prompt","It cannot be forced under any circumstances",1,"`tool_choice` lets a developer require a specific tool (or any tool, or none) be used in that turn."],
+["MCP","The Model Context Protocol (MCP) is designed primarily to:","Compress model weights for faster inference","Provide a standardized way for AI applications to connect to external tools and data sources","Fully replace the Messages API","Encrypt API keys at rest",1,"MCP standardizes how AI applications discover and use external tools, resources, and prompts across different servers."],
+["MCP","MCP generally follows which architectural pattern?","Peer-to-peer only, with no central roles","Client-server, where an MCP client connects to one or more MCP servers","A single monolithic process with no network boundary","A blockchain-based ledger",1,"MCP defines client and server roles: clients (hosted in AI applications) connect to servers exposing capabilities."],
+["MCP","An MCP server can expose which of the following to a connected client?","Only static images","Tools, resources, and prompts","Only billing information","Only system prompt text",1,"MCP servers can expose tools (callable functions), resources (readable content), and prompt templates."],
+["MCP","A key benefit of MCP compared to building bespoke point-to-point integrations is that:","It requires no network connectivity at all","A single MCP server implementation can be reused across many compatible AI applications/clients","It removes the need for any authentication","It is proprietary to a single AI vendor's client only",1,"MCP's standardization lets one server implementation serve many different compliant client applications."],
+["MCP","In MCP terminology, a 'resource' generally represents:","A billing/cost unit","Data or content (e.g., a file or query result) that a client can read and supply as context","A GPU allocation unit","A specific model checkpoint",1,"Resources are addressable pieces of content an MCP server can provide for the client to use as context."],
+["Agents","An 'agent' built on Claude typically differs from a simple single-turn chatbot in that it:","Always uses the smallest available model","Operates in a loop — reasoning, calling tools, observing results, and deciding on next steps toward a goal","Never has access to any tools","Requires no prompt or instructions at all",1,"Agents iterate: plan, act (often via tools), observe results, and continue until the goal is achieved or stopped."],
+["Agents","In agentic workflows, 'orchestration' refers to:","Formatting output as musical notation","Coordinating multiple steps, tools, or sub-agents to accomplish a larger task","A specific UI color theme","A type of API rate limit",1,"Orchestration is the coordination logic that sequences or parallelizes steps, tools, and sub-agents."],
+["Agents","A key risk of giving autonomous agents broad tool access (e.g., file or shell access) is that they:","Are inherently and always perfectly safe","May take unintended or destructive actions without proper guardrails or human oversight","Cannot technically call any tools","Can never be interrupted once started",1,"Without guardrails, autonomous agents with powerful tools can take harmful or irreversible actions unintentionally."],
+["Agents","Subagents in a multi-agent architecture are typically used to:","Replace the main agent's system prompt entirely","Delegate well-scoped sub-tasks, often in parallel or isolation, keeping the main context focused","Increase token costs with no functional benefit","Bypass API rate limits improperly",1,"Subagents handle bounded sub-tasks, which helps parallelize work and protect the main agent's context window."],
+["Agents","Before letting an agent perform an irreversible action (e.g., a force-push or data deletion), best practice is to:","Always proceed immediately without pausing, for speed","Confirm with the user or require explicit authorization given the action's blast radius","Disable all logging of the action","Skip any verification of the action's consequences",1,"High-impact, hard-to-reverse actions generally warrant explicit user confirmation before execution."],
+["RAG & Embeddings","Retrieval-Augmented Generation (RAG) is primarily used to address which limitation of LLMs?","Per-token pricing","Limited or outdated knowledge not present in the model's training data or context","Image generation quality","API request rate limits",1,"RAG supplements a model's static training knowledge with retrieved, up-to-date, or domain-specific information at query time."],
+["RAG & Embeddings","In a typical RAG pipeline, embeddings are used to:","Encrypt documents for secure storage","Represent text as vectors so semantically similar content can be retrieved via similarity search","Compress the model's parameter weights","Generate new images from prompts",1,"Embeddings map text to vector space so retrieval systems can find semantically related content via similarity search."],
+["RAG & Embeddings","A vector database in a RAG architecture is primarily responsible for:","Storing embeddings and enabling fast similarity search over them","Running the language model's inference itself","Handling billing and usage metering","Hosting the system prompt text",0,"Vector databases index embeddings so relevant chunks can be retrieved quickly via nearest-neighbor search."],
+["RAG & Embeddings","Chunking documents before embedding them is done primarily to:","Reduce storage cost to exactly zero","Keep retrieved segments at a manageable, semantically coherent size for context injection","Intentionally make the content unreadable","Avoid using any tokens at all",1,"Appropriately sized, coherent chunks improve retrieval relevance and fit efficiently into the model's context."],
+["RAG & Embeddings","Citations support in Claude helps RAG-style applications primarily by:","Automatically translating retrieved content into other languages","Allowing Claude to ground its answer in specific locations within the provided source documents","Reducing the size of the context window needed","Fully replacing the need for embeddings",1,"Citations let the model point to the specific source passages supporting its claims, improving traceability and trust."],
+["Vision & Multimodal","Claude's vision capability allows it to:","Generate brand-new images from a text description","Analyze and reason about images provided as input, such as charts, screenshots, or photos","Directly edit pixels within an image","Process only strictly black-and-white images",1,"Vision lets Claude interpret and reason about visual input it's given; it does not generate or edit images."],
+["Vision & Multimodal","A common enterprise use case for Claude's vision capability is:","Training entirely new foundation models","Extracting structured data from charts, scanned documents, or UI screenshots","Compiling source code into binaries","Managing API billing dashboards",1,"Vision is frequently used to extract and reason over information embedded in charts, scans, and screenshots."],
+["Vision & Multimodal","When supplying images to Claude via the API, they are typically provided as:","URLs that Claude autonomously crawls on its own","Base64-encoded image data (or an equivalent supported reference) within the message content","Physically printed and mailed copies","Exclusively as password-protected PDF files",1,"Images are typically embedded in the request as base64-encoded data (or other supported formats) within message content."],
+["Vision & Multimodal","Claude's native PDF processing allows it to reason about:","Only the extracted text, never layout or visual elements","Both the textual content and the visual layout or charts within the PDF","Only the file's name and metadata","Only PDFs that are entirely password-protected",1,"Native PDF handling lets Claude take into account visual layout and embedded graphics, not just raw text."],
+["Vision & Multimodal","A practical limitation to keep in mind with multimodal (image) input is that:","There is no limitation whatsoever","Images consume part of the token/context budget, and size or count limits may apply","Images are always free and completely unlimited","Vision only works on the Haiku model tier",1,"Images count against the context/token budget and are subject to size and quantity constraints."],
+["Extended Thinking","Extended (or 'deep') thinking in Claude is designed to:","Permanently store memories across unrelated future sessions","Allow the model additional internal reasoning steps/budget before producing a final answer on complex tasks","Shrink the available context window","Disable the model's ability to use tools",1,"Extended thinking gives the model more room to reason internally before committing to a final answer, aiding complex tasks."],
+["Extended Thinking","Extended thinking is generally most valuable for:","Simple greeting or small-talk responses","Complex multi-step reasoning, math, or planning tasks","Basic plain-text formatting requests","Minimizing latency on trivial queries",1,"The reasoning budget pays off most on genuinely complex problems, not on simple or trivial requests."],
+["Extended Thinking","A typical tradeoff of enabling deeper/extended reasoning is:","There is no tradeoff at all","Increased latency and token usage in exchange for potentially higher-quality answers","Reduced model safety behavior","A smaller usable context window",1,"More reasoning generally costs more time and tokens, traded off against improved answer quality on hard tasks."],
+["Extended Thinking","The 'thinking' content produced during extended thinking is best understood as:","A fully guaranteed, final, user-facing answer","An internal reasoning process, which may be shown transparently but is distinct from the final answer","Hidden training data being leaked","The system prompt being echoed back",1,"Thinking output represents the model's reasoning trace, separate from (and not necessarily equal to) the final response."],
+["Extended Thinking","Developers can typically control how much extended thinking Claude uses via:","Directly editing the model's underlying weights","An API parameter/budget that controls how much reasoning effort the model may use","It is entirely fixed and can never be adjusted","Selecting a different billing currency",1,"APIs typically expose a thinking budget/parameter so developers can tune how much reasoning effort is allowed."],
+["Safety & Alignment","Constitutional AI, as developed by Anthropic, trains models to:","Follow only formal legal statutes","Self-critique and revise their own outputs according to a set of guiding principles, reducing reliance solely on human-labeled feedback","Disregard all safety constraints entirely","Answer exclusively coding-related questions",1,"Constitutional AI uses a set of principles the model applies to critique and revise its own outputs during training."],
+["Safety & Alignment","RLHF stands for:","Rapid Learning for Humans and Frameworks","Reinforcement Learning from Human Feedback","Recursive Language Hierarchical Function","Retrieval-Linked Heuristic Filtering",1,"RLHF is a training technique that uses human preference feedback as a reward signal to fine-tune model behavior."],
+["Safety & Alignment","Anthropic's stated approach to AI safety emphasizes developing models that are:","Maximally engaging regardless of outcome","Helpful, harmless, and honest","Entirely free of any evaluation or oversight","Designed with no human oversight whatsoever",1,"Anthropic frames its safety mission around building AI systems that are helpful, harmless, and honest."],
+["Safety & Alignment","'Red teaming' an AI model refers to:","Rebranding the model's user interface","Deliberately probing the model for harmful, unsafe, or unintended behaviors to uncover weaknesses","Reducing the model's parameter count","Running a marketing campaign",1,"Red teaming is adversarial testing meant to surface failure modes and safety weaknesses before deployment."],
+["Safety & Alignment","A 'jailbreak' attempt against an LLM refers to:","A supported, sanctioned API feature","An attempt to bypass the model's safety guidelines or intended constraints through crafted prompts","A hardware malfunction in the data center","A billing dispute process",1,"Jailbreaks are adversarial prompting techniques aimed at circumventing a model's intended safety behavior."],
+["Claude Code","Claude Code is best described as:","A web-based image generation tool","An agentic command-line coding assistant that can read, edit, and run code within a developer's environment","A spreadsheet application","A video editing suite",1,"Claude Code is Anthropic's CLI-based coding agent that operates directly within a developer's local environment."],
+["Claude Code","'Hooks' in Claude Code allow users to:","Alter the model's underlying training data","Automatically run custom shell commands in response to events such as tool calls","Disable all permission checks system-wide","Connect the tool to social media platforms",1,"Hooks are user-configured shell commands triggered by specific events (e.g., before/after a tool call) during a session."],
+["Claude Code","Connecting MCP servers to Claude Code primarily serves to:","Make the context window effectively infinite","Extend Claude Code's capabilities with external tools and data sources (e.g., issue trackers, chat, databases)","Replace the underlying model entirely","Change which pricing tier applies",1,"MCP servers let Claude Code reach external systems (like Jira or Slack) beyond its built-in local tools."],
+["Claude Code","Claude Code's permission system is designed to:","Automatically allow every action with no review at all","Require user approval for risky or irreversible actions unless explicitly pre-authorized","Permanently block all tool use","Operate only in a fully read-only mode at all times",1,"The permission model prompts for approval on higher-risk actions, balancing autonomy with user control."],
+["Claude Code","A CLAUDE.md file in a project is typically used to:","Store plaintext API keys and secrets","Provide persistent, project-specific instructions and context for the agent to follow","Compile or build the application","Replace the project's package manifest file",1,"CLAUDE.md holds durable, project-level guidance (conventions, context, instructions) that the agent reads each session."],
+["Computer Use","Claude's 'computer use' capability allows the model to:","Process only plain text with no visual component","Perceive a screen via screenshots and interact with a computer through simulated mouse and keyboard actions","Physically control external robotic hardware","Mine cryptocurrency autonomously",1,"Computer use gives Claude the ability to view screenshots and issue simulated input actions to operate a GUI."],
+["Computer Use","A primary risk consideration when enabling computer use is that:","There is effectively no risk involved","The model could take unintended actions on a real system, so sandboxing and oversight are recommended","It can only ever function while fully offline","It requires no screenshots to operate at all",1,"Because it can act on a real system, computer use should generally be run in sandboxed or closely supervised environments."],
+["Computer Use","Computer use is particularly well-suited for automating tasks that involve:","Exclusively command-line interfaces","GUI-based applications that lack a programmatic API","Only mobile native applications","Only relational database queries",1,"Computer use shines where there's no API to call directly and the only interface is a graphical one."],
+["Computer Use","When using computer use, Claude typically learns the outcome of an action it took via:","A new screenshot reflecting the updated screen state","Direct memory access to the application's internals","An emailed status report","No feedback mechanism exists at all",0,"After each action, a fresh screenshot is generally captured and returned so Claude can observe the resulting state."],
+["Computer Use","Best practice strongly recommends running computer-use-enabled agents within:","Full, unrestricted production environments with no isolation","An isolated or virtualized/sandboxed environment","A live personal banking session","Shared root access available to all employees",1,"Sandboxing limits the blast radius of any unintended or incorrect actions the agent might take on a real system."],
+["Artifacts","'Artifacts' in Claude.ai refer to:","Corrupted or broken output files","A dedicated UI surface for viewing and iterating on substantial generated content such as code, documents, or diagrams","Billing receipts for API usage","System error logs",1,"Artifacts provide a separate panel for substantial, reusable content that benefits from its own view and iteration."],
+["Artifacts","Artifacts are particularly useful for content that:","Is a single one-word answer","The user will want to view, edit, or interact with separately from the ongoing chat flow (e.g., a React component or report)","Is meant to delete the conversation history","Manages API key rotation",1,"Artifacts suit substantial content meant to be reviewed or iterated on outside the linear chat transcript."],
+["Artifacts","Which content types are commonly supported for rendering within Artifacts?","Only plain, unformatted text","Code (e.g., HTML/React), diagrams, and documents","Only raw audio files","Only compiled binary executables",1,"Artifacts commonly render code, interactive HTML/React, diagrams, and formatted documents."],
+["Artifacts","When a user gives feedback on an artifact, Claude typically responds by:","Starting an entirely new, unrelated conversation from scratch","Revising the artifact's content while preserving relevant prior context","Deleting the user's account","Manually editing content directly on Anthropic's servers",1,"Claude iterates on the existing artifact in place, incorporating feedback while retaining relevant context."],
+["Artifacts","A key UX benefit of Artifacts is that they:","Hide all output from the user entirely","Separate large generated content from the conversational flow, making it easier to review and iterate on independently","Reduce the underlying model's accuracy","Prevent any further edits once created",1,"By decoupling substantial content from the linear chat, Artifacts make iteration and review more manageable."],
+["Performance & Caching","Prompt caching in the Claude API is designed to:","Permanently store a customer's conversations server-side forever by default","Reduce latency and cost by reusing previously processed prompt prefixes across requests","Disable the system prompt for that request","Intentionally increase token costs",1,"Prompt caching reuses previously processed portions of a prompt, cutting both latency and cost on repeated use."],
+["Performance & Caching","Prompt caching delivers the most benefit when:","Every request uses a completely unique, non-repeating prompt","Large, static portions of a prompt (e.g., long reference context or instructions) are reused across many requests","Requests are entirely one-off with no tools involved","No system prompt is used at all",1,"Caching pays off most when a sizable static prefix (instructions, long context) is shared across many calls."],
+["Performance & Caching","Streaming responses from the Claude API primarily improve:","The model's underlying accuracy","Perceived latency, by delivering output tokens incrementally as they are generated","The hard token limit per request","Content safety filtering behavior",1,"Streaming sends tokens as they're generated, improving the user's perceived responsiveness rather than raw accuracy."],
+["Performance & Caching","The Batch API is best suited for:","Real-time chat applications that require instant replies","Large volumes of non-urgent requests processed asynchronously, often at lower cost","A single, time-critical urgent request","Image generation workloads exclusively",1,"Batch processing trades immediacy for efficiency and often lower cost on large, non-urgent workloads."],
+["Performance & Caching","Rate limits on the Claude API are typically expressed in terms of:","The number of users currently logged in","Requests per minute and/or tokens per minute","The number of files a user has uploaded","Screen resolution of the client device",1,"API rate limits are commonly defined by requests-per-minute and/or tokens-per-minute thresholds."],
+["Structured Output","To reliably get valid JSON output from Claude, a recommended technique is to:","Ask vaguely and provide no formatting guidance at all","Define a clear schema and/or use prefill plus explicit formatting instructions","Disable the system prompt entirely","Set temperature to its maximum value",1,"Explicit schemas, formatting instructions, and prefill all help constrain output toward valid, parseable JSON."],
+["Structured Output","Tool-use schemas can be repurposed purely for structured data extraction by:","Having Claude call a tool whose 'result' is never actually executed — it's only used to capture schema-conformant output","This approach is not possible under any circumstances","Disabling all tool schemas before the call","Restricting the technique to image inputs only",0,"A common pattern forces a tool call purely to get back structured, schema-validated data, without truly executing anything."],
+["Structured Output","When strict adherence to an output format matters, lowering which parameter often helps reduce variability?","max_tokens","temperature","the size of the context window","The API version number",1,"Lower temperature reduces sampling randomness, generally producing more consistent, predictable formatting."],
+["Structured Output","Validating model-generated JSON programmatically before using it downstream is recommended because:","LLM output can occasionally be malformed or not strictly conform to the intended schema","Generated JSON is always guaranteed to be perfectly valid","Validation of LLM output is not technically possible","JSON is never actually used in LLM-based systems",0,"Even with good prompting, LLM output can deviate from the schema, so downstream validation is a safety net."],
+["Structured Output","An advantage of using tool/function schemas for structured output over parsing free-text is that it:","Guarantees zero cost for the request","Provides the model a clear, machine-readable contract that reduces ambiguity about the expected output shape","Removes the need for any prompt or instructions","Automatically disables response streaming",1,"A defined schema communicates exactly what fields and types are expected, reducing parsing ambiguity versus free text."],
+["Deployment","Besides Anthropic's direct API, Claude models are also available via which major cloud platforms?","Only specialized on-premise hardware appliances","Amazon Bedrock and Google Cloud Vertex AI","Only through spreadsheet software","Only via physical USB delivery",1,"Claude is available through Anthropic's direct API as well as via Amazon Bedrock and Google Cloud Vertex AI."],
+["Deployment","A key reason an enterprise might choose Claude via Amazon Bedrock instead of the direct Anthropic API is to:","Access Claude at all, since direct API access doesn't otherwise exist","Leverage existing AWS infrastructure, billing, and compliance/security integrations","Automatically remove every rate limit entirely","Guarantee access to a completely different model family",1,"Bedrock lets enterprises consume Claude within their existing AWS account, billing, IAM, and compliance setup."],
+["Deployment","Claude for Enterprise/Team plans typically add which capability relative to individual consumer plans?","No meaningful differences at all","Expanded context handling, admin controls, and organization-wide data governance features","Removal of all built-in safety behaviors","Fully unlimited, free API access",1,"Enterprise/Team tiers generally add admin controls, governance, and higher usage ceilings suited to organizations."],
+["Deployment","Regarding data handling for enterprise API usage, Anthropic's policies generally specify that:","All customer API data is used to train future models by default","Customer API data is generally not used to train models without explicit opt-in, per Anthropic's stated policies","No data handling policies exist at all","All submitted data becomes publicly accessible",1,"Anthropic's standard policy is not to train on customer API data by default, absent explicit opt-in."],
+["Deployment","Choosing between cloud marketplace access (e.g., Bedrock/Vertex) and the direct Anthropic API often depends on:","Personal aesthetic preference with no technical basis","Existing vendor relationships, compliance requirements, and regional data residency needs","A coin flip, since the options are functionally identical in every respect","Nothing, since only one option is ever actually available",1,"The right deployment path depends on an organization's existing cloud commitments, compliance posture, and data residency needs."],
+["Evaluation & Guardrails","An 'eval' (evaluation), in the context of LLM application development, refers to:","A tax filing document","A systematic test measuring model or application output quality against defined criteria","A marketing performance report","A pure hardware benchmark unrelated to model output",1,"Evals are structured tests that score model/application behavior against defined success criteria."],
+["Evaluation & Guardrails","A 'golden dataset' used in evaluation workflows serves to:","Store API credentials securely","Provide a curated set of inputs with known-correct or expected outputs for measuring accuracy","Replace the system prompt during production use","Directly retrain the underlying base model",1,"Golden datasets give a trusted reference of expected outputs against which model responses are scored."],
+["Evaluation & Guardrails","Guardrails in an LLM-based application commonly include:","Deliberately removing all error handling","Input/output filtering, validation, and monitoring to prevent harmful or incorrect behavior","Disabling all logging of model activity","Maximizing the temperature setting for every request",1,"Guardrails are the validation, filtering, and monitoring layers that keep an LLM application's behavior within bounds."],
+["Evaluation & Guardrails","'LLM-as-a-judge' refers to the practice of:","Running a courtroom simulation game for entertainment","Using a language model to automatically grade or score the outputs of another model against defined criteria","Describing a specific piece of GPU hardware","Describing a particular API pricing model",1,"LLM-as-a-judge uses one model to evaluate and score another model's (or its own) outputs against rubric criteria."],
+["Evaluation & Guardrails","Monitoring an agent's tool calls in production is valuable primarily because it:","Provides no real value to the operator","Enables detecting failures, misuse, or behavioral drift over time","Deliberately slows down the billing process","Fully replaces the need for upfront testing",1,"Ongoing monitoring surfaces regressions, misuse, or drift that pre-release testing alone can't fully catch."],
+["Architecture & Strategy","A 'system of agents' where one orchestrator delegates to specialized subagents is an example of:","A single-model, fully monolithic design","A multi-agent architecture","A purely static website with no backend logic","A plain relational database schema",1,"Orchestrator-plus-subagent setups are a canonical example of multi-agent system architecture."],
+["Architecture & Strategy","A key reliability practice when building a production Claude-based application is to:","Never handle API errors or retries of any kind","Implement retry logic with backoff and gracefully handle rate-limit or transient errors","Hardcode a fixed set of responses regardless of input","Disable all monitoring and observability",1,"Resilient production systems use retries with backoff and graceful handling of transient or rate-limit errors."],
+["Architecture & Strategy","Given latency/quality tradeoffs across Claude's model tiers, an architect should generally:","Always use the most expensive, most capable model for every task regardless of need","Match model tier to task complexity, routing simpler tasks to smaller/faster models","Avoid making any model tier selection at all","Commit to a single tier permanently with no flexibility",1,"Tiered routing — simple tasks to Haiku, complex ones to Opus/Sonnet — optimizes cost and latency without sacrificing quality where it matters."],
+["Architecture & Strategy","Context window management strategies for long-running agent sessions commonly include:","Never summarizing or truncating, letting requests simply fail once the limit is hit","Summarizing or compacting older conversation history to stay within budget while preserving key context","Terminating the agent permanently after exactly one turn","Always maximizing the extended-thinking budget regardless of task",1,"Summarization/compaction of older turns is a standard technique for keeping long sessions within context limits."],
+["Architecture & Strategy","The overarching goal of a 'Claude Architect' role, when designing AI-powered systems, is best summarized as:","Maximizing token usage regardless of the outcome produced","Designing reliable, safe, and effective systems that appropriately combine models, tools, context, and guardrails to meet business needs","Avoiding the use of any tools or external context whatsoever","Replacing all human review processes immediately and entirely",1,"The role centers on thoughtfully combining models, tools, context management, and guardrails to reliably meet real business needs."]
+];
+
+let current = 0;
+let answered = new Array(QUESTIONS.length).fill(null); // null = unanswered, else selected index
+let locked = new Array(QUESTIONS.length).fill(false);
+
+const qTextEl = document.getElementById('q-text');
+const qTagEl = document.getElementById('q-tag');
+const optionsEl = document.getElementById('options');
+const explainEl = document.getElementById('explain');
+const verdictEl = document.getElementById('verdict');
+const explainTextEl = document.getElementById('explain-text');
+const checkBtn = document.getElementById('check-btn');
+const nextBtn = document.getElementById('next-btn');
+const prevBtn = document.getElementById('prev-btn');
+const counterEl = document.getElementById('q-counter');
+const categoryEl = document.getElementById('q-category');
+const progressBar = document.getElementById('progress-bar');
+const scoreLive = document.getElementById('score-live');
+const quizCard = document.getElementById('quiz-card');
+const finalCard = document.getElementById('final-card');
+const gridEl = document.getElementById('grid');
+
+function letterFor(i){ return String.fromCharCode(65+i); }
+
+function buildGrid(){
+  gridEl.innerHTML = '';
+  QUESTIONS.forEach((_, i) => {
+    const b = document.createElement('div');
+    b.className = 'jump';
+    b.textContent = i+1;
+    b.title = 'Question ' + (i+1);
+    b.addEventListener('click', () => { current = i; render(); });
+    gridEl.appendChild(b);
+  });
+  refreshGrid();
+}
+
+function refreshGrid(){
+  const nodes = gridEl.children;
+  for (let i=0;i<nodes.length;i++){
+    const n = nodes[i];
+    n.classList.remove('answered','current','correct-jump','incorrect-jump');
+    if (answered[i] !== null){
+      n.classList.add('answered');
+      const correctIdx = QUESTIONS[i][6];
+      if (answered[i] === correctIdx) n.classList.add('correct-jump');
+      else n.classList.add('incorrect-jump');
+    }
+    if (i === current) n.classList.add('current');
+  }
+}
+
+function computeScore(){
+  let score = 0, attempted = 0;
+  answered.forEach((a, i) => {
+    if (a !== null){
+      attempted++;
+      if (a === QUESTIONS[i][6]) score++;
+    }
+  });
+  return {score, attempted};
+}
+
+function updateScoreLive(){
+  const {score, attempted} = computeScore();
+  scoreLive.textContent = 'Score: ' + score + ' / ' + attempted;
+}
+
+function render(){
+  if (current >= QUESTIONS.length){
+    showFinal();
+    return;
+  }
+  finalCard.classList.add('hidden');
+  quizCard.classList.remove('hidden');
+
+  const [cat, qtext, a, b, c, d, correctIdx, explanation] = QUESTIONS[current];
+  qTagEl.textContent = cat;
+  qTextEl.textContent = qtext;
+  counterEl.textContent = 'Question ' + (current+1) + ' of ' + QUESTIONS.length;
+  categoryEl.textContent = cat;
+  progressBar.style.width = (((current+1)/QUESTIONS.length)*100) + '%';
+
+  const opts = [a,b,c,d];
+  optionsEl.innerHTML = '';
+  opts.forEach((optText, idx) => {
+    const row = document.createElement('label');
+    row.className = 'option';
+    row.innerHTML =
+      '<input type="radio" name="opt" value="' + idx + '">' +
+      '<span class="letter">' + letterFor(idx) + '.</span>' +
+      '<span class="label">' + optText + '</span>';
+    row.addEventListener('click', (e) => {
+      if (locked[current]) { e.preventDefault(); return; }
+      const radio = row.querySelector('input');
+      radio.checked = true;
+      Array.from(optionsEl.children).forEach(r => r.classList.remove('selected'));
+      row.classList.add('selected');
+    });
+    optionsEl.appendChild(row);
+  });
+
+  explainEl.classList.remove('show');
+  checkBtn.classList.remove('hidden');
+  nextBtn.classList.add('hidden');
+  prevBtn.disabled = current === 0;
+
+  if (locked[current]) {
+    const selected = answered[current];
+    applyLockState(selected, correctIdx, explanation);
+  }
+
+  updateScoreLive();
+  refreshGrid();
+}
+
+function applyLockState(selected, correctIdx, explanation){
+  const rows = Array.from(optionsEl.children);
+  rows.forEach((row, idx) => {
+    row.classList.add('locked');
+    const radio = row.querySelector('input');
+    radio.disabled = true;
+    if (idx === selected) radio.checked = true;
+    if (idx === correctIdx) row.classList.add('correct');
+    else if (idx === selected && selected !== correctIdx) row.classList.add('incorrect');
+  });
+  checkBtn.classList.add('hidden');
+  nextBtn.classList.remove('hidden');
+  nextBtn.textContent = (current === QUESTIONS.length - 1) ? 'See Results →' : 'Next →';
+
+  explainEl.classList.add('show');
+  if (selected === correctIdx){
+    verdictEl.textContent = 'Correct';
+    verdictEl.className = 'verdict ok';
+  } else {
+    verdictEl.textContent = 'Incorrect — correct answer: ' + letterFor(correctIdx);
+    verdictEl.className = 'verdict bad';
+  }
+  explainTextEl.textContent = explanation;
+}
+
+checkBtn.addEventListener('click', () => {
+  const selectedRadio = optionsEl.querySelector('input[name="opt"]:checked');
+  if (!selectedRadio) return;
+  const selected = parseInt(selectedRadio.value, 10);
+  answered[current] = selected;
+  locked[current] = true;
+  const correctIdx = QUESTIONS[current][6];
+  const explanation = QUESTIONS[current][7];
+  applyLockState(selected, correctIdx, explanation);
+  updateScoreLive();
+  refreshGrid();
+});
+
+nextBtn.addEventListener('click', () => {
+  current++;
+  render();
+});
+
+prevBtn.addEventListener('click', () => {
+  if (current > 0){
+    current--;
+    render();
+  }
+});
+
+function showFinal(){
+  quizCard.classList.add('hidden');
+  finalCard.classList.remove('hidden');
+  const {score} = computeScore();
+  const pct = Math.round((score/QUESTIONS.length)*100);
+  document.getElementById('final-pct').textContent = pct + '%';
+  document.getElementById('final-frac').textContent = score + ' / ' + QUESTIONS.length;
+}
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+  current = 0;
+  answered = new Array(QUESTIONS.length).fill(null);
+  locked = new Array(QUESTIONS.length).fill(false);
+  render();
+});
+
+buildGrid();
+render();
+</script>
+</body>
+</html>
